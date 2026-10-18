@@ -1,0 +1,57 @@
+### Busca um CEP (vem da ViaCEP)
+GET http://localhost:8080/api/v1/ceps/01001-000
+
+### Cadastra um endereço prioritário para o mesmo CEP
+POST http://localhost:8080/api/v1/addresses
+Content-Type: application/json
+
+{
+  "cep": "01001-000",
+  "street": "Praça da Sé",
+  "complement": "Sede",
+  "neighborhood": "Sé",
+  "city": "São Paulo",
+  "state": "SP"
+}
+
+### A mesma busca agora vem da base prioritária
+GET http://localhost:8080/api/v1/ceps/01001-000
+
+### Lista os endereços prioritários de uma cidade
+GET http://localhost:8080/api/v1/addresses?city=São Paulo
+
+### Log das consultas (gravado de forma assíncrona)
+GET http://localhost:8080/api/v1/lookups?cep=01001000
+
+### CEP inexistente: 404
+GET http://localhost:8080/api/v1/ceps/99999-999
+
+### CEP inválido: 400
+GET http://localhost:8080/api/v1/ceps/abc
+
+### Tentativa de SQL Injection: 400, sem chegar ao banco
+POST http://localhost:8080/api/v1/addresses
+Content-Type: application/json
+
+{
+  "cep": "01001000'; DROP TABLE priority_address;--",
+  "street": "Rua A",
+  "neighborhood": "Centro",
+  "city": "São Paulo",
+  "state": "SP"
+}
+
+### Apóstrofo é aceito e gravado como texto (consulta parametrizada)
+POST http://localhost:8080/api/v1/addresses
+Content-Type: application/json
+
+{
+  "cep": "18035-400",
+  "street": "Rua D'Ávila",
+  "neighborhood": "Centro",
+  "city": "Sorocaba",
+  "state": "SP"
+}
+
+### Remove o endereço prioritário
+DELETE http://localhost:8080/api/v1/addresses/01001-000
