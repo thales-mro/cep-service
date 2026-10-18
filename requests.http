@@ -24,7 +24,7 @@ GET http://localhost:8080/api/v1/addresses?city=São Paulo
 GET http://localhost:8080/api/v1/lookups?cep=01001000
 
 ### CEP inexistente: 404
-GET http://localhost:8080/api/v1/ceps/99999-999
+GET http://localhost:8080/api/v1/ceps/00000-000
 
 ### CEP inválido: 400
 GET http://localhost:8080/api/v1/ceps/abc

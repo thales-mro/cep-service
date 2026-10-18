@@ -30,7 +30,7 @@ step "4. Log das consultas, gravado de forma assíncrona via Kafka"
 run curl "$API/lookups?cep=01001000"
 
 step "5. CEP inexistente (404) e CEP inválido (400)"
-run curl "$API/ceps/99999-999"
+run curl "$API/ceps/00000-000"
 run curl "$API/ceps/abc"
 
 step "6. Tentativa de SQL Injection (400, sem chegar ao banco)"
