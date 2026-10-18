@@ -14,12 +14,26 @@ A arquitetura completa, com diagramas, está em [docs/arquitetura.md](docs/arqui
 ```mermaid
 flowchart LR
     client([Cliente]) --> app[CEP Service]
-    app -- "1. base prioritária" --> pg[(PostgreSQL)]
-    app -- "2. API externa" --> viacep[ViaCEP / BrasilAPI]
-    app -- "3. evento assíncrono" --> kafka{{Kafka}}
-    kafka -- "4. grava o log" --> pg
+    app -- "① base prioritária" --> pg[(PostgreSQL)]
+    app -- "② API externa" --> viacep[ViaCEP / BrasilAPI]
+    app == "③ evento assíncrono" ==> kafka@{ shape: h-cyl, label: "Kafka" }
+    kafka == "④ grava o log" ==> pg
     prom[Prometheus] --> app
     graf[Grafana] --> prom
+
+    classDef client fill:#475569,stroke:#1e293b,color:#fff
+    classDef app fill:#2563eb,stroke:#1e3a8a,color:#fff
+    classDef data fill:#0f766e,stroke:#134e4a,color:#fff
+    classDef messaging fill:#ea580c,stroke:#7c2d12,color:#fff
+    classDef external fill:#7c3aed,stroke:#4c1d95,color:#fff
+    classDef observability fill:#be185d,stroke:#831843,color:#fff
+    class client client
+    class app app
+    class pg data
+    class kafka messaging
+    class viacep external
+    class prom,graf observability
+    linkStyle 3,4 stroke:#ea580c,stroke-width:3px
 ```
 
 ## Como executar
