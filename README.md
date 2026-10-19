@@ -152,6 +152,48 @@ Grafana já sobe com o dashboard **CEP Service**, que mostra:
 
 Para gerar tráfego e ver os gráficos se mexerem: `./scripts/load.sh`.
 
+### Teste de carga (15 minutos)
+
+Executado localmente em 18/10/2026, com a stack completa no Docker Compose (uma instância de
+cada serviço, numa máquina de desenvolvimento).
+
+**Cenário.** Três cópias de `./scripts/load.sh 900` em paralelo (~14,5 requisições/s). Os 8 CEPs
+válidos da lista foram cadastrados antes na base prioritária, para não sobrecarregar as APIs
+públicas, que são gratuitas; cada busca continua gerando um evento no Kafka. Ficaram de fora
+o CEP inexistente `00000000`, que passa pela ViaCEP e pela BrasilAPI, e o CEP inválido `abc`,
+recusado na validação.
+
+| Métrica | Resultado |
+|---|---|
+| Requisições enviadas | 13.055 em 900 s (14,5/s) |
+| Buscas válidas (200 + 404) | 11.760: 10.491 encontradas e 1.269 inexistentes |
+| Requisições inválidas (400) | 1.295, recusadas antes de qualquer consulta |
+| Eventos publicados no Kafka / logs gravados no banco | 11.760 / 11.760 (nenhum perdido) |
+| Falhas de publicação, mensagens na DLT, erros do consumidor | 0 / 0 / 0 |
+| Lag máximo do consumidor | 0 mensagens (coleta a cada 5 s) |
+| Envio ao Kafka (média) / gravação do log (média, máximo) | 1,4 ms / 3,7 ms, 227 ms |
+| Latência da busca encontrada (base prioritária) | p95 = 3,1 ms (máximo 589 ms) |
+| Latência da busca inexistente (APIs externas) | p95 = 463 ms com a ViaCEP no ar; 2,1 s depois que ela caiu |
+| Heap máximo da JVM | ~120 MB |
+
+**Leitura dos resultados.**
+- **O log assíncrono não pesa na resposta.** A busca na base prioritária responde em poucos
+  milissegundos, e a publicação no Kafka leva ~1,4 ms. A gravação no banco acontece depois,
+  no consumidor, que acompanhou o ritmo o tempo todo (lag zero) sem perder nenhum evento.
+- **O fallback funcionou numa falha real.** Aos ~8 minutos de teste, a ViaCEP deixou de
+  responder por IPv4 a partir da máquina do teste ("Host is unreachable" e "Connect timed out",
+  534 avisos no log). Não foi possível saber se foi um bloqueio por volume ou uma
+  instabilidade deles. Todas essas buscas seguiram para a BrasilAPI e responderam
+  corretamente, sem nenhum erro 5xx. O custo apareceu só na latência das buscas que dependiam
+  da API externa, que passou a incluir o timeout de conexão de 2 s.
+- **As partições ficaram desbalanceadas** (56%, 22% e 22% das mensagens), porque a chave da
+  mensagem é o CEP e o teste usa só 10 CEPs. Com CEPs variados, como em produção, a
+  distribuição tende a se equilibrar.
+
+**Possíveis melhorias que o teste sugere:** cache das respostas das APIs externas (um CEP
+quase nunca muda) e circuit breaker, para deixar de tentar a ViaCEP por um tempo depois de
+falhas seguidas, em vez de pagar o timeout em toda requisição.
+
 ## Estrutura do projeto
 
 ```
