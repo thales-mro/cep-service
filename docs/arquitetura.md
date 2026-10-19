@@ -223,7 +223,7 @@ erDiagram
         varchar complement
         varchar neighborhood
         varchar city
-        varchar state "UF"
+        varchar state "UF (CHECK: lista fechada)"
         timestamptz created_at
     }
     CEP_LOOKUP_LOG {
@@ -232,7 +232,7 @@ erDiagram
         varchar cep
         timestamptz queried_at "horário da consulta"
         varchar source "PRIORITY_BASE, VIACEP, BRASILAPI, NOT_FOUND"
-        boolean found
+        boolean found "CHECK: coerente com source"
         text response_json "dados retornados"
         timestamptz recorded_at
     }
