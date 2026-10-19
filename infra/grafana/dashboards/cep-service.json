@@ -85,6 +85,71 @@
       ],
       "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
       "options": { "legend": { "displayMode": "list", "placement": "bottom" } }
+    },
+    {
+      "id": 7,
+      "type": "row",
+      "title": "Kafka",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 24 },
+      "panels": []
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Kafka: mensagens produzidas x consumidas (por segundo)",
+      "description": "Eventos publicados no tópico cep-lookups e lidos pelo consumidor do log. As duas linhas juntas indicam que o consumidor acompanha o ritmo.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 25 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "sum(rate(kafka_producer_topic_record_send_total{topic=\"cep-lookups\"}[1m]))", "legendFormat": "produzidas" },
+        { "refId": "B", "expr": "sum(rate(kafka_consumer_fetch_manager_records_consumed_total[1m]))", "legendFormat": "consumidas" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" } }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Kafka: lag do consumidor por partição",
+      "description": "Mensagens já publicadas que o consumidor ainda não leu. Perto de zero: o log está em dia. Crescendo: o consumidor não dá conta (ou está fora do ar, quando a métrica some).",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 25 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "sum by (partition) (kafka_consumer_fetch_manager_records_lag{topic=\"cep-lookups\"})", "legendFormat": "partição {{partition}}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "min": 0 }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" } }
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Kafka: tempo de envio e de processamento",
+      "description": "Envio: chamada ao KafkaTemplate na busca. Processamento: consumidor gravando o log no banco (média e pior caso).",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 33 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "sum(rate(spring_kafka_template_seconds_sum[1m])) / sum(rate(spring_kafka_template_seconds_count[1m]))", "legendFormat": "envio (média)" },
+        { "refId": "B", "expr": "sum(rate(spring_kafka_listener_seconds_sum[1m])) / sum(rate(spring_kafka_listener_seconds_count[1m]))", "legendFormat": "processamento (média)" },
+        { "refId": "C", "expr": "max(spring_kafka_listener_seconds_max)", "legendFormat": "processamento (máximo)" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" } }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Kafka: erros e dead letter (por segundo)",
+      "description": "Falhas de envio do produtor, falhas do consumidor (antes das novas tentativas) e mensagens desviadas para cep-lookups-dlt. O normal é tudo em zero.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 33 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "sum(rate(kafka_producer_record_error_total[1m]))", "legendFormat": "erros de envio" },
+        { "refId": "B", "expr": "sum(rate(spring_kafka_listener_seconds_count{result=\"failure\"}[1m])) or vector(0)", "legendFormat": "falhas do consumidor" },
+        { "refId": "C", "expr": "sum(rate(kafka_producer_topic_record_send_total{topic=\"cep-lookups-dlt\"}[1m])) or vector(0)", "legendFormat": "enviadas para a DLT" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops", "min": 0 }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" } }
     }
   ]
 }

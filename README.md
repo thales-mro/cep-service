@@ -145,7 +145,10 @@ Grafana já sobe com o dashboard **CEP Service**, que mostra:
 - latência p50/p95 da busca e latência p95 de cada provedor externo;
 - respostas HTTP por status;
 - logs gravados e falhas de publicação no Kafka;
-- memória da JVM.
+- memória da JVM;
+- **Kafka**: mensagens produzidas x consumidas, lag do consumidor por partição, tempo de
+  envio e de processamento, e erros/mensagens desviadas para a DLT. Essas métricas vêm
+  dos próprios clientes Kafka, publicadas pelo Micrometer, sem exporter adicional.
 
 Para gerar tráfego e ver os gráficos se mexerem: `./scripts/load.sh`.
 
